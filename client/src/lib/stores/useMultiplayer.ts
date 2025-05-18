@@ -1,209 +1,260 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { io, Socket } from 'socket.io-client';
-import { 
-  Character, 
-  PlayerState, 
-  MessageType, 
-  GameMessage,
-  Position
-} from '@shared/types';
-import { useMMOGame } from './useMMOGame';
 import { useCharacter } from './useCharacter';
-import { useInventory } from './useInventory';
+import { useGame } from './useGame';
+import { useMMOGame } from './useMMOGame';
+import { useAudio } from './useAudio';
+import { 
+  GameMessage, 
+  MessageType, 
+  PlayerState,
+  Position,
+  Character 
+} from '@shared/types';
 
-// Define the types for the multiplayer state
+interface OtherPlayer {
+  character: Character;
+  lastUpdated: number;
+}
+
 interface MultiplayerState {
+  // Connection state
   socket: Socket | null;
-  otherPlayers: Record<string, Character>;
+  connected: boolean;
+  otherPlayers: Record<string, OtherPlayer>;
   
-  // Connection actions
+  // Actions
   connect: () => void;
   disconnect: () => void;
+  joinGame: () => void;
+  leaveGame: () => void;
+  updatePosition: (position: Position, rotation: number, moving: boolean, attacking: boolean) => void;
+  sendAttack: (position: Position, rotation: number) => void;
   
-  // Game actions
-  sendPlayerUpdate: () => void;
-  sendAttackAction: () => void;
-  
-  // Other players management
-  updateOtherPlayer: (playerId: string, update: Partial<Character>) => void;
-  removeOtherPlayer: (playerId: string) => void;
+  // State queries
+  getOtherPlayers: () => Record<string, OtherPlayer>;
+  isConnected: () => boolean;
 }
 
 export const useMultiplayer = create<MultiplayerState>()(
   subscribeWithSelector((set, get) => ({
     socket: null,
+    connected: false,
     otherPlayers: {},
     
-    // Connect to server
     connect: () => {
-      const socket = io('http://localhost:5000', {
-        autoConnect: true,
-        reconnection: true
-      });
+      // Check if already connected
+      if (get().socket) return;
       
-      // Set socket in state
-      set({ socket });
-      
-      // Set up socket event handlers
-      socket.on('connect', () => {
-        console.log('Connected to game server');
-        useMMOGame.getState().setConnected(true);
+      try {
+        // Connect to the server
+        const socket = io(window.location.origin, {
+          transports: ['websocket', 'polling']
+        });
         
-        // Get player data
-        const character = useCharacter.getState().character;
-        const inventory = useInventory.getState().inventory;
+        // Setup connection handlers
+        socket.on('connect', () => {
+          console.log('Connected to game server');
+          set({ connected: true, socket });
+          useMMOGame.getState().setConnected(true);
+        });
         
-        if (character) {
-          // Send player join message
-          socket.emit('message', {
-            type: MessageType.PlayerJoin,
-            player: {
-              character,
-              inventory,
-              isAttacking: false
-            }
-          });
-        }
-      });
-      
-      socket.on('disconnect', () => {
-        console.log('Disconnected from game server');
-        useMMOGame.getState().setConnected(false);
-      });
-      
-      socket.on('message', (message: GameMessage) => {
-        switch (message.type) {
-          case MessageType.PlayerJoin:
-            // Add new player to our list of other players
-            const newPlayerId = message.player.character.id;
-            if (newPlayerId !== useMMOGame.getState().playerId) {
+        socket.on('disconnect', () => {
+          console.log('Disconnected from game server');
+          set({ connected: false });
+          useMMOGame.getState().setConnected(false);
+        });
+        
+        // Handle game messages
+        socket.on('message', (message: GameMessage) => {
+          const { playHit } = useAudio.getState();
+          
+          switch (message.type) {
+            case MessageType.PlayerJoin:
+              // Add other player to our list
+              console.log('Player joined:', message.player.character.id);
               set((state) => ({
                 otherPlayers: {
                   ...state.otherPlayers,
-                  [newPlayerId]: message.player.character
+                  [message.player.character.id]: {
+                    character: message.player.character,
+                    lastUpdated: Date.now()
+                  }
                 }
               }));
-            }
-            break;
-            
-          case MessageType.PlayerLeave:
-            // Remove player from our list
-            get().removeOtherPlayer(message.playerId);
-            break;
-            
-          case MessageType.PlayerUpdate:
-            // Update other player's position and state
-            if (message.playerId !== useMMOGame.getState().playerId) {
-              get().updateOtherPlayer(message.playerId, {
-                position: message.position,
-                rotation: message.rotation,
-                moving: message.moving,
-                attacking: message.attacking
-              });
-            }
-            break;
-            
-          case MessageType.AttackAction:
-            // Handle incoming attack action
-            if (message.playerId !== useMMOGame.getState().playerId) {
-              get().updateOtherPlayer(message.playerId, {
-                attacking: true,
-                position: message.position,
-                rotation: message.rotation
-              });
+              break;
               
-              // Reset attacking state after animation time
-              setTimeout(() => {
-                get().updateOtherPlayer(message.playerId, {
-                  attacking: false
-                });
-              }, 500);
-            }
-            break;
-            
-          case MessageType.DamagePlayer:
-            // Handle incoming damage
-            const { targetId, damage } = message;
-            const myPlayerId = useMMOGame.getState().playerId;
-            
-            if (targetId === myPlayerId) {
-              // I took damage
-              useCharacter.getState().takeDamage(damage);
-            } else {
-              // Another player took damage, could animate this
-            }
-            break;
-        }
-      });
+            case MessageType.PlayerLeave:
+              // Remove player from our list
+              console.log('Player left:', message.playerId);
+              set((state) => {
+                const newPlayers = { ...state.otherPlayers };
+                delete newPlayers[message.playerId];
+                return { otherPlayers: newPlayers };
+              });
+              break;
+              
+            case MessageType.PlayerUpdate:
+              // Update player's position and state
+              set((state) => {
+                // Only update if we have this player
+                if (!state.otherPlayers[message.playerId]) {
+                  return state;
+                }
+                
+                // Create a copy of the character with updated position
+                const updatedCharacter = {
+                  ...state.otherPlayers[message.playerId].character,
+                  position: message.position,
+                  rotation: message.rotation,
+                  moving: message.moving,
+                  attacking: message.attacking
+                };
+                
+                return {
+                  otherPlayers: {
+                    ...state.otherPlayers,
+                    [message.playerId]: {
+                      character: updatedCharacter,
+                      lastUpdated: Date.now()
+                    }
+                  }
+                };
+              });
+              break;
+              
+            case MessageType.AttackAction:
+              // Visual feedback for other player's attacks
+              console.log('Attack action by player:', message.playerId);
+              break;
+              
+            case MessageType.DamagePlayer:
+              // Handle incoming damage
+              const myPlayerId = useMMOGame.getState().playerId;
+              
+              if (message.targetId === myPlayerId) {
+                // We were hit!
+                console.log(`Taking ${message.damage} damage from ${message.attackerId}`);
+                useCharacter.getState().takeDamage(message.damage);
+                playHit();
+              }
+              break;
+          }
+        });
+        
+        set({ socket });
+      } catch (error) {
+        console.error('Failed to connect to server:', error);
+      }
     },
     
-    // Disconnect from server
     disconnect: () => {
       const { socket } = get();
       if (socket) {
         socket.disconnect();
-        set({ socket: null, otherPlayers: {} });
+        set({ socket: null, connected: false, otherPlayers: {} });
       }
     },
     
-    // Send player update to server
-    sendPlayerUpdate: () => {
+    joinGame: () => {
       const { socket } = get();
-      const character = useCharacter.getState().character;
+      const { character } = useCharacter.getState();
       
-      if (socket && socket.connected && character) {
-        socket.emit('message', {
-          type: MessageType.PlayerUpdate,
-          playerId: character.id,
-          position: character.position,
-          rotation: character.rotation,
-          moving: character.moving,
-          attacking: character.attacking
-        });
-      }
+      if (!socket || !character) return;
+      
+      // Create player state
+      const playerState: PlayerState = {
+        character,
+        inventory: {
+          items: [],
+          gold: 0,
+          maxSlots: 20
+        },
+        isAttacking: false
+      };
+      
+      // Send join message
+      socket.emit('message', {
+        type: MessageType.PlayerJoin,
+        player: playerState
+      });
+      
+      console.log('Joined game with character:', character.name);
     },
     
-    // Send attack action to server
-    sendAttackAction: () => {
+    leaveGame: () => {
       const { socket } = get();
-      const character = useCharacter.getState().character;
+      const myPlayerId = useMMOGame.getState().playerId;
       
-      if (socket && socket.connected && character) {
-        socket.emit('message', {
-          type: MessageType.AttackAction,
-          playerId: character.id,
-          position: character.position,
-          rotation: character.rotation
-        });
-      }
+      if (!socket) return;
+      
+      // Send leave message
+      socket.emit('message', {
+        type: MessageType.PlayerLeave,
+        playerId: myPlayerId
+      });
+      
+      // Clear other players
+      set({ otherPlayers: {} });
     },
     
-    // Update an other player's data
-    updateOtherPlayer: (playerId, update) => {
-      set((state) => {
-        const player = state.otherPlayers[playerId];
-        if (!player) return { otherPlayers: state.otherPlayers };
-        
-        return {
-          otherPlayers: {
-            ...state.otherPlayers,
-            [playerId]: {
-              ...player,
-              ...update
-            }
-          }
-        };
+    updatePosition: (position, rotation, moving, attacking) => {
+      const { socket } = get();
+      const myPlayerId = useMMOGame.getState().playerId;
+      
+      if (!socket || !myPlayerId) return;
+      
+      // Send position update message
+      socket.emit('message', {
+        type: MessageType.PlayerUpdate,
+        playerId: myPlayerId,
+        position,
+        rotation,
+        moving,
+        attacking
       });
     },
     
-    // Remove an other player
-    removeOtherPlayer: (playerId) => {
-      set((state) => {
-        const newOtherPlayers = { ...state.otherPlayers };
-        delete newOtherPlayers[playerId];
-        return { otherPlayers: newOtherPlayers };
+    sendAttack: (position, rotation) => {
+      const { socket } = get();
+      const myPlayerId = useMMOGame.getState().playerId;
+      
+      if (!socket || !myPlayerId) return;
+      
+      // Send attack message
+      socket.emit('message', {
+        type: MessageType.AttackAction,
+        playerId: myPlayerId,
+        position,
+        rotation
       });
-    }
+    },
+    
+    getOtherPlayers: () => get().otherPlayers,
+    
+    isConnected: () => get().connected
   }))
 );
+
+// Cleanup inactive players every 30 seconds
+setInterval(() => {
+  const { otherPlayers } = useMultiplayer.getState();
+  const now = Date.now();
+  const timeout = 10000; // 10 seconds timeout
+  
+  const updatedPlayers = { ...otherPlayers };
+  let changed = false;
+  
+  for (const playerId in otherPlayers) {
+    if (now - otherPlayers[playerId].lastUpdated > timeout) {
+      console.log(`Player ${playerId} timed out`);
+      delete updatedPlayers[playerId];
+      changed = true;
+    }
+  }
+  
+  if (changed) {
+    useMultiplayer.setState({ otherPlayers: updatedPlayers });
+  }
+}, 30000);

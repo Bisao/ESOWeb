@@ -9,6 +9,9 @@ import {
 } from '@shared/types';
 import { addPlayer, removePlayer, getPlayers, updatePlayer, getPlayer } from './players';
 
+// Map to store player IDs by socket ID
+const playerSocketMap = new Map<string, string>();
+
 export function setupGameServer(httpServer: Server) {
   // Initialize Socket.io server
   const io = new SocketIOServer(httpServer, {
@@ -28,6 +31,10 @@ export function setupGameServer(httpServer: Server) {
     socket.on('message', (message: GameMessage) => {
       switch (message.type) {
         case MessageType.PlayerJoin:
+          // Store mapping between socket ID and player ID
+          playerSocketMap.set(socket.id, message.player.character.id);
+          console.log(`Mapped socket ${socket.id} to player ${message.player.character.id}`);
+          
           // Add player to our list
           addPlayer(message.player);
           
@@ -44,6 +51,9 @@ export function setupGameServer(httpServer: Server) {
           
           // Broadcast new player to all others
           socket.broadcast.emit('message', message);
+          
+          // Log total player count
+          console.log(`Total players: ${Object.keys(players).length}`);
           break;
           
         case MessageType.PlayerUpdate:
@@ -62,7 +72,7 @@ export function setupGameServer(httpServer: Server) {
           
         case MessageType.AttackAction:
           // Process attack
-          processAttack(message.playerId, message.position, message.rotation);
+          processAttack(io, message.playerId, message.position, message.rotation);
           
           // Broadcast attack to all clients including sender
           io.emit('message', message);
@@ -74,89 +84,111 @@ export function setupGameServer(httpServer: Server) {
     socket.on('disconnect', () => {
       console.log(`Player disconnected: ${socket.id}`);
       
-      // Find player by socket ID and remove from our list
-      // This would require storing socket IDs with players
-      // For simplicity, we'll assume disconnect is handled client-side
+      // Get player ID from socket
+      const playerId = playerSocketMap.get(socket.id);
+      if (playerId) {
+        // Remove player from the game
+        removePlayer(playerId);
+        playerSocketMap.delete(socket.id);
+        
+        // Notify all other clients
+        io.emit('message', {
+          type: MessageType.PlayerLeave,
+          playerId
+        });
+        
+        console.log(`Player ${playerId} removed from game`);
+        console.log(`Total players: ${Object.keys(getPlayers()).length}`);
+      }
     });
   });
   
-  // Process attack - check for hits and apply damage
-  function processAttack(attackerId: string, position: Position, rotation: number) {
-    // Get the attacker
-    const attacker = getPlayer(attackerId);
-    if (!attacker) return;
+  // Start the heartbeat to check for inactive players
+  setInterval(() => {
+    // In a real implementation, this would check last activity time
+    // and remove inactive players
+    console.log(`Active players: ${Object.keys(getPlayers()).length}`);
+  }, 60000); // Check every minute
+  
+  return io;
+}
+
+// Process attack - check for hits and apply damage
+function processAttack(io: SocketIOServer, attackerId: string, position: Position, rotation: number) {
+  // Get the attacker
+  const attacker = getPlayer(attackerId);
+  if (!attacker) return;
+  
+  // Get all players
+  const players = getPlayers();
+  
+  // Calculate attack range based on class
+  const attackRange = getAttackRange(attacker.character.class);
+  
+  // Check for hits on other players
+  for (const playerId in players) {
+    // Skip self
+    if (playerId === attackerId) continue;
     
-    // Get all players
-    const players = getPlayers();
+    const target = players[playerId].character;
     
-    // Calculate attack range based on class
-    const attackRange = getAttackRange(attacker.character.class);
+    // Calculate distance between attacker and target
+    const dx = target.position.x - position.x;
+    const dz = target.position.z - position.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
     
-    // Check for hits on other players
-    for (const playerId in players) {
-      // Skip self
-      if (playerId === attackerId) continue;
+    // Check if target is within range
+    if (distance <= attackRange) {
+      // Check if target is in attack direction (in front of attacker)
+      const attackDirectionX = Math.sin(rotation);
+      const attackDirectionZ = Math.cos(rotation);
       
-      const target = players[playerId].character;
+      // Dot product to check if target is in front
+      const dotProduct = dx * attackDirectionX + dz * attackDirectionZ;
       
-      // Calculate distance between attacker and target
-      const dx = target.position.x - position.x;
-      const dz = target.position.z - position.z;
-      const distance = Math.sqrt(dx * dx + dz * dz);
-      
-      // Check if target is within range
-      if (distance <= attackRange) {
-        // Check if target is in attack direction (in front of attacker)
-        const attackDirectionX = Math.sin(rotation);
-        const attackDirectionZ = Math.cos(rotation);
+      // If dot product is positive, target is in front
+      if (dotProduct > 0) {
+        // Calculate damage based on attacker's stats
+        const damage = calculateDamage(attacker.character);
         
-        // Dot product to check if target is in front
-        const dotProduct = dx * attackDirectionX + dz * attackDirectionZ;
+        console.log(`Player ${attackerId} hit player ${playerId} for ${damage} damage`);
         
-        // If dot product is positive, target is in front
-        if (dotProduct > 0) {
-          // Calculate damage based on attacker's stats
-          const damage = calculateDamage(attacker.character);
-          
-          // Send damage message to all clients
-          io.emit('message', {
-            type: MessageType.DamagePlayer,
-            targetId: playerId,
-            damage,
-            attackerId
-          });
-        }
+        // Send damage message to all clients
+        io.emit('message', {
+          type: MessageType.DamagePlayer,
+          targetId: playerId,
+          damage,
+          attackerId
+        });
       }
     }
   }
-  
-  // Get attack range based on character class
-  function getAttackRange(characterClass: CharacterClass): number {
-    switch (characterClass) {
-      case CharacterClass.Warrior:
-        return 2; // Short range
-      case CharacterClass.Mage:
-        return 8; // Long range
-      case CharacterClass.Archer:
-        return 10; // Longest range
-      default:
-        return 3;
-    }
+}
+
+// Get attack range based on character class
+function getAttackRange(characterClass: CharacterClass): number {
+  switch (characterClass) {
+    case CharacterClass.Warrior:
+      return 2; // Short range
+    case CharacterClass.Mage:
+      return 8; // Long range
+    case CharacterClass.Archer:
+      return 10; // Longest range
+    default:
+      return 3;
   }
-  
-  // Calculate damage based on character stats
-  function calculateDamage(character: Character): number {
-    switch (character.class) {
-      case CharacterClass.Warrior:
-        return 10 + Math.floor(character.stats.strength * 0.8);
-      case CharacterClass.Mage:
-        return 5 + Math.floor(character.stats.intelligence * 0.9);
-      case CharacterClass.Archer:
-        return 7 + Math.floor(character.stats.dexterity * 0.8);
-      default:
-        return 5;
-    }
+}
+
+// Calculate damage based on character stats
+function calculateDamage(character: Character): number {
+  switch (character.class) {
+    case CharacterClass.Warrior:
+      return 10 + Math.floor(character.stats.strength * 0.8);
+    case CharacterClass.Mage:
+      return 5 + Math.floor(character.stats.intelligence * 0.9);
+    case CharacterClass.Archer:
+      return 7 + Math.floor(character.stats.dexterity * 0.8);
+    default:
+      return 5;
   }
-  
-  return io;
 }
