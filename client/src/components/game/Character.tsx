@@ -1,38 +1,38 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, useAnimations, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { CharacterClass } from '@shared/types';
 import { useCharacter } from '@/lib/stores/useCharacter';
 import { useMMOGame } from '@/lib/stores/useMMOGame';
 import { useAudio } from '@/lib/stores/useAudio';
 
+// Define outside the component to avoid re-creation
+const classColors = {
+  [CharacterClass.Warrior]: '#ff5555',
+  [CharacterClass.Mage]: '#5555ff',
+  [CharacterClass.Archer]: '#55ff55',
+};
+
 export function Character() {
   const characterRef = useRef<THREE.Group>(null);
   const { character } = useCharacter();
-  const { cameraType, showDebug } = useMMOGame();
+  const { showDebug } = useMMOGame();
   const { playHit } = useAudio();
-  const { viewport } = useThree();
+  
+  // Animation time reference
+  const time = useRef(0);
+  
+  // Update animation time in useFrame
+  useFrame((state, delta) => {
+    time.current += delta;
+  });
   
   // Skip rendering if character is not created yet
   if (!character) return null;
   
-  // Different colors for character classes
-  const classColors = {
-    [CharacterClass.Warrior]: '#ff5555',
-    [CharacterClass.Mage]: '#5555ff',
-    [CharacterClass.Archer]: '#55ff55',
-  };
-  
   // Get character color based on class
   const characterColor = classColors[character.class];
   
-  // Animation timing
-  const time = useRef(0);
-  useFrame((state, delta) => {
-    time.current += delta;
-  });
-
   // Create articulated character model
   return (
     <group 
