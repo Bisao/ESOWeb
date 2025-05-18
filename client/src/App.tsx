@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { GameScene } from './components/game/GameScene';
 import { GameHUD } from './components/ui/game/GameHUD';
 import { CharacterCreation } from './components/ui/game/CharacterCreation';
+import { MobileControls } from './components/ui/MobileControls';
 import { useMMOGame } from './lib/stores/useMMOGame';
 import { GamePhase } from '@shared/types';
 import { useAudio } from './lib/stores/useAudio';
@@ -45,6 +46,9 @@ function App() {
       {/* UI Overlays */}
       {gamePhase === GamePhase.CharacterCreation && <CharacterCreation />}
       {gamePhase !== GamePhase.CharacterCreation && <GameHUD />}
+      
+      {/* Mobile Controls - only appears on touch devices */}
+      <MobileControls />
     </div>
   );
 }
