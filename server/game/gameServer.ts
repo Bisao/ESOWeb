@@ -12,7 +12,47 @@ import { addPlayer, removePlayer, getPlayers, updatePlayer, getPlayer } from './
 // Map to store player IDs by socket ID
 const playerSocketMap = new Map<string, string>();
 // Store host player ID
+interface GameLobby {
+  id: string;
+  hostName: string;
+  players: Set<string>;
+}
+
+const lobbies = new Map<string, GameLobby>();
 let hostPlayerId: string | null = null;
+
+function createLobby(hostName: string): GameLobby {
+  const id = Math.random().toString(36).substring(7);
+  const lobby = {
+    id,
+    hostName,
+    players: new Set<string>()
+  };
+  lobbies.set(id, lobby);
+  return lobby;
+}
+
+function removeLobby(id: string) {
+  lobbies.delete(id);
+}
+
+function joinLobby(lobbyId: string, playerId: string): boolean {
+  const lobby = lobbies.get(lobbyId);
+  if (!lobby) return false;
+  
+  lobby.players.add(playerId);
+  return true;
+}
+
+function leaveLobby(lobbyId: string, playerId: string) {
+  const lobby = lobbies.get(lobbyId);
+  if (!lobby) return;
+  
+  lobby.players.delete(playerId);
+  if (lobby.players.size === 0) {
+    removeLobby(lobbyId);
+  }
+}
 
 export function setupGameServer(httpServer: Server) {
   // Initialize Socket.io server
@@ -30,6 +70,28 @@ export function setupGameServer(httpServer: Server) {
   // Socket.io connection handler
   io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
+
+    socket.on('get-lobbies', () => {
+      const lobbyList = Array.from(lobbies.values()).map(lobby => ({
+        id: lobby.id,
+        hostName: lobby.hostName,
+        playerCount: lobby.players.size
+      }));
+      socket.emit('lobbies', lobbyList);
+    });
+
+    socket.on('create-lobby', (data: { name: string, hostName: string }) => {
+      const lobby = createLobby(data.hostName);
+      joinLobby(lobby.id, socket.id);
+      io.emit('lobbies', Array.from(lobbies.values()));
+    });
+
+    socket.on('join-lobby', (data: { lobbyId: string }) => {
+      if (joinLobby(data.lobbyId, socket.id)) {
+        socket.join(data.lobbyId);
+        io.emit('lobbies', Array.from(lobbies.values()));
+      }
+    });
     
     // Handle game messages
     socket.on('message', (message: GameMessage) => {

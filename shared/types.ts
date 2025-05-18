@@ -105,6 +105,7 @@ export interface Inventory {
 
 // Game phase
 export enum GamePhase {
+  Lobby = "lobby",
   CharacterCreation = "characterCreation",
   Playing = "playing",
   Inventory = "inventory",
