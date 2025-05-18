@@ -3,21 +3,6 @@ import { useState, useEffect } from 'react';
 import { CharacterClass, GamePhase } from '@shared/types';
 import { useCharacter } from '@/lib/stores/useCharacter';
 import { useMMOGame } from '@/lib/stores/useMMOGame';
-
-export function GameHUD() {
-  const { character } = useCharacter();
-  const { playersOnline } = useMMOGame();
-  
-  return (
-    <div className="absolute top-0 left-0 p-4 text-white">
-      <div className="bg-black/50 p-2 rounded">
-        <div>Players Online: {playersOnline}</div>
-        <div>HP: {character.stats.health}</div>
-      </div>
-    </div>
-  );
-}
-import { useMMOGame } from '@/lib/stores/useMMOGame';
 import { useMultiplayer } from '@/lib/stores/useMultiplayer';
 import { useAudio } from '@/lib/stores/useAudio';
 import { Progress } from '@/components/ui/progress';
