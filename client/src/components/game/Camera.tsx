@@ -4,11 +4,24 @@ import * as THREE from 'three';
 import { useCharacter } from '@/lib/stores/useCharacter';
 import { useMMOGame } from '@/lib/stores/useMMOGame';
 import { PointerLockControls } from '@react-three/drei';
+import { GamePhase } from '@shared/types';
 
 export function Camera() {
   const { character } = useCharacter();
-  const { cameraType } = useMMOGame();
+  const { cameraType, gamePhase } = useMMOGame();
   const { camera } = useThree();
+  const controlsRef = useRef<any>(null);
+
+  // Lock/unlock pointer based on game phase
+  useEffect(() => {
+    if (controlsRef.current) {
+      if (gamePhase === GamePhase.Playing) {
+        controlsRef.current.lock();
+      } else {
+        controlsRef.current.unlock();
+      }
+    }
+  }, [gamePhase]);
 
   const cameraPosition = useRef(new THREE.Vector3());
   const smoothFactor = useRef(0.15);
@@ -36,5 +49,5 @@ export function Camera() {
     camera.position.lerp(cameraPosition.current, smoothFactor.current);
   });
 
-  return <PointerLockControls />;
+  return <PointerLockControls ref={controlsRef} />;
 }
