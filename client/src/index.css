@@ -23,6 +23,12 @@
   position: fixed;
 }
 
+/* Hide cursor when pointer is locked */
+.cursor-locked {
+  cursor: none;
+}
+
+
 canvas {
   width: 100% !important;
   height: 100% !important;
