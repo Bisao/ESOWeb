@@ -46,7 +46,7 @@ export function PlayerController() {
       camera
     } = getKeys();
     
-    // Calculate movement direction
+    // Calculate movement direction relative to current rotation
     const moveZ = Number(forward) - Number(backward);
     const moveX = Number(right) - Number(left);
     
@@ -58,42 +58,25 @@ export function PlayerController() {
       setMoving(isMoving);
     }
     
-    // Calculate rotation based on movement direction
     if (isMoving) {
-      const angle = Math.atan2(moveX, moveZ);
-      const targetRotation = angle;
+      // Use mouse rotation for character direction
+      const currentRotation = character.rotation;
       
-      // Apply smooth rotation
-      let currentRotation = character.rotation;
-      const angleDiff = targetRotation - currentRotation;
-      
-      // Normalize angle difference to [-PI, PI]
-      const normalizedDiff = ((angleDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
-      
-      // Apply rotation with smooth interpolation
-      if (Math.abs(normalizedDiff) > 0.01) {
-        currentRotation += normalizedDiff * rotationSpeed * delta;
-        updateRotation(currentRotation);
-      }
-      
-      // Update player direction based on rotation
-      playerDirection.current.set(
-        Math.sin(currentRotation),
+      // Calculate movement vector relative to character rotation
+      const moveVector = new THREE.Vector3(
+        moveX * Math.cos(currentRotation) + moveZ * Math.sin(currentRotation),
         0,
-        Math.cos(currentRotation)
-      );
-      
-      // Apply movement in rotated direction
-      playerVelocity.current.copy(playerDirection.current).multiplyScalar(speed * delta);
+        moveZ * Math.cos(currentRotation) - moveX * Math.sin(currentRotation)
+      ).normalize().multiplyScalar(speed * delta);
       
       // Calculate jump height for y position
       const jumpOffset = isJumping.current ? Math.sin(jumpHeight.current) * 1.5 : 0;
       
-      // Update position with improved movement
+      // Update position with strafe movement
       updatePosition({
-        x: character.position.x + playerVelocity.current.x,
+        x: character.position.x + moveVector.x,
         y: character.position.y + jumpOffset,
-        z: character.position.z + playerVelocity.current.z
+        z: character.position.z + moveVector.z
       });
     }
     
