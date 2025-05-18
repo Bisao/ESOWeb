@@ -21,7 +21,7 @@ export function MobileControls() {
   return (
     <div className="fixed inset-0 pointer-events-none">
       {/* Movement D-pad */}
-      <div className="absolute bottom-6 left-6 grid grid-cols-3 grid-rows-3 gap-2 pointer-events-auto">
+      <div className="absolute bottom-8 left-8 grid grid-cols-3 grid-rows-3 gap-3 pointer-events-auto scale-110">
         {/* Empty */}
         <div></div>
         {/* Up */}
@@ -68,7 +68,7 @@ export function MobileControls() {
         <MobileButton 
           label="ATTACK" 
           controlKey="KeyF" 
-          className="bg-red-600/90 hover:bg-red-700 text-white h-16 w-16 text-xs"
+          className="bg-red-600/90 hover:bg-red-700 active:scale-95 active:bg-red-800 text-white h-16 w-16 text-xs transition-all"
           onClick={() => {
             setAttacking(true);
             // Reset attack state after animation
