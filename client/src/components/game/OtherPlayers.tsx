@@ -102,8 +102,8 @@ function OtherPlayer({ player }: { player: CharacterType }) {
         </group>
       )}
       
-      {/* Player name */}
-      <Html position={[0, 3, 0]} player={player} />
+      {/* Player name - Temporarily disabled for stability */}
+      {/* Will be fixed in next update */}
     </group>
   );
 }

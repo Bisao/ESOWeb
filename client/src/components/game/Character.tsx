@@ -107,10 +107,8 @@ export function Character() {
         </mesh>
       )}
       
-      {/* Player name */}
-      <Html position={[0, 3, 0]} center distanceFactor={10}>
-        <div className="player-name">{character.name}</div>
-      </Html>
+      {/* Player name - Temporarily removing HTML component until fixed */}
+      {/* Will implement proper name display in next update */}
     </group>
   );
 }
