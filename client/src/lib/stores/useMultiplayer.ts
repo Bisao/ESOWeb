@@ -132,6 +132,12 @@ export const useMultiplayer = create<MultiplayerState>()(
               console.log('Attack action by player:', message.playerId);
               break;
               
+            case MessageType.HostUpdate:
+              // Update host ID
+              useMMOGame.getState().setHostId(message.hostId);
+              console.log(`Host updated: ${message.hostId}`);
+              break;
+              
             case MessageType.DamagePlayer:
               // Handle incoming damage
               const myPlayerId = useMMOGame.getState().playerId;

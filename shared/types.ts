@@ -124,7 +124,8 @@ export enum MessageType {
   PlayerLeave = "player-leave",
   PlayerUpdate = "player-update",
   AttackAction = "attack-action",
-  DamagePlayer = "damage-player"
+  DamagePlayer = "damage-player",
+  HostUpdate = "host-update"
 }
 
 // Messages
@@ -161,9 +162,15 @@ export interface DamagePlayerMessage {
   attackerId: string;
 }
 
+export interface HostUpdateMessage {
+  type: MessageType.HostUpdate;
+  hostId: string | null;
+}
+
 export type GameMessage = 
   | PlayerJoinMessage
   | PlayerLeaveMessage
   | PlayerUpdateMessage
   | AttackActionMessage
-  | DamagePlayerMessage;
+  | DamagePlayerMessage
+  | HostUpdateMessage;

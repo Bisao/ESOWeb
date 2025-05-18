@@ -13,9 +13,12 @@ interface MMOGameState {
   isConnected: boolean;
   cameraType: 'thirdPerson' | 'firstPerson';
   showDebug: boolean;
-  
+
   // Actions
   setPlayerId: (id: string) => void;
+  hostId: string | null;
+  setHostId: (id: string | null) => void;
+  isHost: () => boolean;
   setPlayerName: (name: string) => void;
   setGamePhase: (phase: GamePhase) => void;
   setSelectedClass: (characterClass: CharacterClass) => void;
@@ -27,7 +30,7 @@ interface MMOGameState {
 }
 
 export const useMMOGame = create<MMOGameState>()(
-  subscribeWithSelector((set) => ({
+  subscribeWithSelector((set, get) => ({
     playerId: uuidv4(), // Generate a unique ID for this player
     playerName: '',
     gamePhase: GamePhase.CharacterCreation,
@@ -35,9 +38,12 @@ export const useMMOGame = create<MMOGameState>()(
     isConnected: false,
     cameraType: 'thirdPerson',
     showDebug: false,
-    
+    hostId: null,
+
     // Actions
     setPlayerId: (id) => set({ playerId: id }),
+    setHostId: (id) => set({ hostId: id }),
+    isHost: () => get().playerId === get().hostId,
     setPlayerName: (name) => set({ playerName: name }),
     setGamePhase: (phase) => set({ gamePhase: phase }),
     setSelectedClass: (characterClass) => set({ selectedClass: characterClass }),

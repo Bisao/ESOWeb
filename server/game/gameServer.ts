@@ -11,6 +11,8 @@ import { addPlayer, removePlayer, getPlayers, updatePlayer, getPlayer } from './
 
 // Map to store player IDs by socket ID
 const playerSocketMap = new Map<string, string>();
+// Store host player ID
+let hostPlayerId: string | null = null;
 
 export function setupGameServer(httpServer: Server) {
   // Initialize Socket.io server
@@ -34,11 +36,24 @@ export function setupGameServer(httpServer: Server) {
       switch (message.type) {
         case MessageType.PlayerJoin:
           // Store mapping between socket ID and player ID
-          playerSocketMap.set(socket.id, message.player.character.id);
-          console.log(`Mapped socket ${socket.id} to player ${message.player.character.id}`);
+          const playerId = message.player.character.id;
+          playerSocketMap.set(socket.id, playerId);
+          console.log(`Mapped socket ${socket.id} to player ${playerId}`);
+          
+          // Set first player as host
+          if (!hostPlayerId) {
+            hostPlayerId = playerId;
+            console.log(`Player ${playerId} is now the host`);
+          }
           
           // Add player to our list
           addPlayer(message.player);
+          
+          // Notify all clients about the host
+          io.emit('message', {
+            type: MessageType.HostUpdate,
+            hostId: hostPlayerId
+          });
           
           // Send current players to new player
           const players = getPlayers();
@@ -89,6 +104,24 @@ export function setupGameServer(httpServer: Server) {
       // Get player ID from socket
       const playerId = playerSocketMap.get(socket.id);
       if (playerId) {
+        // Check if disconnecting player is host
+        if (playerId === hostPlayerId) {
+          // Find next player to be host
+          const players = getPlayers();
+          const playerIds = Object.keys(players);
+          const nextHost = playerIds.find(id => id !== playerId);
+          hostPlayerId = nextHost || null;
+          
+          // Notify about new host
+          if (hostPlayerId) {
+            console.log(`New host is player ${hostPlayerId}`);
+            io.emit('message', {
+              type: MessageType.HostUpdate,
+              hostId: hostPlayerId
+            });
+          }
+        }
+        
         // Remove player from the game
         removePlayer(playerId);
         playerSocketMap.delete(socket.id);
