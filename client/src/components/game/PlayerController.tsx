@@ -63,6 +63,7 @@ export function PlayerController() {
       const currentRotation = character.rotation;
       
       // Calculate movement vector relative to character rotation
+      const currentRotation = character.rotation;
       const moveVector = new THREE.Vector3(
         moveX * Math.cos(currentRotation) + moveZ * Math.sin(currentRotation),
         0,
