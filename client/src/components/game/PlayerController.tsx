@@ -46,7 +46,14 @@ export function PlayerController() {
       camera
     } = getKeys();
     
-    // Calculate movement direction
+    // Get mouse movement from Three.js state
+    const { mouse, viewport } = state;
+    
+    // Calculate rotation from mouse position
+    const targetRotation = Math.atan2(mouse.x * viewport.width, mouse.y * viewport.height);
+    character.rotation = targetRotation;
+
+    // Calculate movement direction relative to camera rotation
     const moveZ = Number(forward) - Number(backward);
     const moveX = Number(right) - Number(left);
     
@@ -58,14 +65,10 @@ export function PlayerController() {
       setMoving(isMoving);
     }
     
-    // Calculate rotation based on movement direction
     if (isMoving) {
-      const angle = Math.atan2(moveX, moveZ);
-      const targetRotation = angle;
-      
-      // Apply smooth rotation
-      let currentRotation = character.rotation;
-      const angleDiff = targetRotation - currentRotation;
+      // Apply movement relative to camera rotation
+      const moveAngle = Math.atan2(moveX, moveZ);
+      const finalAngle = moveAngle + character.rotation;
       
       // Normalize angle difference to [-PI, PI]
       const normalizedDiff = ((angleDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
