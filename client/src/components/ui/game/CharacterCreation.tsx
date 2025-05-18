@@ -36,8 +36,8 @@ export function CharacterCreation() {
   };
   
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
-      <Card className="w-full max-w-3xl bg-card/95 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <Card className="w-full max-w-3xl bg-white">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl">Create Your Character</CardTitle>
           <CardDescription>
