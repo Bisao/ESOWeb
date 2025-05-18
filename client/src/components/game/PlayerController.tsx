@@ -48,7 +48,7 @@ export function PlayerController() {
     
     // Calculate movement direction relative to current rotation
     const moveZ = Number(forward) - Number(backward);
-    const moveX = Number(right) - Number(left);
+    const moveX = Number(left) - Number(right);
     
     // Set player moving state
     const isMoving = moveX !== 0 || moveZ !== 0;
