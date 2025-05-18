@@ -68,11 +68,11 @@ export function Character() {
         <meshStandardMaterial color="black" />
       </mesh>
       
-      {/* Left arm (animated) */}
+      {/* Left arm (animated with elbow) */}
       <group position={[0.45, 1.35, 0]} rotation={[
-        0, 
-        0, 
-        character.moving ? Math.sin(time.current * 5) * 0.4 : 0
+        0,
+        0,
+        character.moving ? Math.sin(time.current * 5) * 0.3 : 0
       ]}>
         {/* Upper arm */}
         <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
@@ -80,11 +80,11 @@ export function Character() {
           <meshStandardMaterial color={characterColor} />
         </mesh>
         
-        {/* Lower arm */}
+        {/* Elbow joint and lower arm */}
         <group position={[0, -0.5, 0]} rotation={[
-          character.moving ? Math.sin(time.current * 5 + 0.5) * 0.3 : 0,
-          0, 
-          0
+          character.moving ? Math.sin(time.current * 5 + Math.PI) * 0.5 : 0,
+          0,
+          character.moving ? Math.sin(time.current * 5) * 0.2 : 0
         ]}>
           <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
             <boxGeometry args={[0.18, 0.5, 0.18]} />
@@ -130,10 +130,10 @@ export function Character() {
         </group>
       </group>
       
-      {/* Left leg (animated) */}
+      {/* Left leg (animated with knee) */}
       <group position={[0.2, 0.5, 0]} rotation={[
-        character.moving ? -Math.sin(time.current * 5) * 0.5 : 0,
-        0, 
+        character.moving ? -Math.sin(time.current * 5) * 0.4 : 0,
+        0,
         0
       ]}>
         {/* Upper leg */}
@@ -142,11 +142,11 @@ export function Character() {
           <meshStandardMaterial color="#5555aa" />
         </mesh>
         
-        {/* Lower leg */}
+        {/* Knee joint and lower leg */}
         <group position={[0, -0.6, 0]} rotation={[
-          character.moving ? Math.sin(time.current * 5 + 1) * 0.5 : 0,
-          0, 
-          0
+          character.moving ? Math.max(0, Math.sin(time.current * 5)) * 0.8 : 0,
+          0,
+          character.moving ? Math.sin(time.current * 5) * 0.1 : 0
         ]}>
           <mesh castShadow receiveShadow position={[0, -0.3, 0]}>
             <boxGeometry args={[0.22, 0.6, 0.22]} />
