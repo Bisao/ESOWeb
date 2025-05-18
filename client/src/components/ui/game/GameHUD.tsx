@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CharacterClass, GamePhase } from '@shared/types';
 import { useCharacter } from '@/lib/stores/useCharacter';
@@ -130,22 +131,6 @@ export function GameHUD() {
       {/* Render panels based on game phase */}
       {gamePhase === GamePhase.Inventory && <InventoryPanel />}
       {gamePhase === GamePhase.Stats && <CharacterStats />}
-    </div>
-  );
-}
-import { useCharacter } from '@/lib/stores/useCharacter';
-import { useMMOGame } from '@/lib/stores/useMMOGame';
-
-export function GameHUD() {
-  const { character } = useCharacter();
-  const { playersOnline } = useMMOGame();
-
-  return (
-    <div className="absolute top-0 left-0 p-4 text-white">
-      <div className="bg-black/50 p-2 rounded">
-        <div>Players Online: {playersOnline}</div>
-        <div>HP: {character.stats.health}</div>
-      </div>
     </div>
   );
 }
