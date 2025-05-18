@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { GameScene } from './components/game/GameScene';
 import { CharacterCreation } from './components/ui/game/CharacterCreation';
 import { LobbyScene } from './components/ui/game/LobbyScene';
+import { GameHUD } from './components/ui/game/GameHUD';
 import { MobileControls } from './components/ui/MobileControls';
 import { useMMOGame } from './lib/stores/useMMOGame';
 import { GamePhase } from '@shared/types';
