@@ -9,10 +9,11 @@ export function Camera() {
   const { cameraType } = useMMOGame();
   const { camera } = useThree();
   
-  // Camera settings
-  const cameraOffset = useRef(new THREE.Vector3(0, 5, 10));
+  // Enhanced camera settings
+  const cameraOffset = useRef(new THREE.Vector3(0, 6, 12)); // Adjusted for better view
   const cameraLookAt = useRef(new THREE.Vector3());
   const cameraPosition = useRef(new THREE.Vector3());
+  const smoothFactor = useRef(0.15); // Increased smoothness
   
   // Smoothly follow player
   useFrame(() => {
@@ -49,22 +50,22 @@ export function Camera() {
       );
     }
     
-    // Smoothly interpolate to target position (lerp)
-    camera.position.lerp(cameraPosition.current, 0.1);
+    // Smoothly interpolate to target position with improved smoothness
+    camera.position.lerp(cameraPosition.current, smoothFactor.current);
     
     // Update camera target
     const currentLookAt = new THREE.Vector3();
     camera.getWorldDirection(currentLookAt);
     
-    // Calculate target direction
+    // Calculate target direction with more responsive aiming
     const targetDirection = new THREE.Vector3()
       .subVectors(cameraLookAt.current, camera.position)
       .normalize();
     
-    // Interpolate the direction vector
+    // Improved interpolation for smoother camera movement
     const interpolatedDirection = new THREE.Vector3()
       .copy(currentLookAt)
-      .lerp(targetDirection, 0.1);
+      .lerp(targetDirection, smoothFactor.current * 1.2);
     
     // Set the camera's direction
     const lookAtPosition = new THREE.Vector3()

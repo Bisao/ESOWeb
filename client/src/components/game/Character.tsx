@@ -89,13 +89,19 @@ export function Character() {
         </group>
       )}
       
-      {/* Attack animation */}
+      {/* Enhanced attack animation */}
       {character.attacking && (
         <group position={[1, 1.5, 0]}>
           <mesh>
-            <sphereGeometry args={[0.3, 16, 16]} />
-            <meshStandardMaterial color="#ffaa00" emissive="#ff6600" emissiveIntensity={0.5} />
+            <sphereGeometry args={[0.4, 16, 16]} />
+            <meshStandardMaterial color="#ffaa00" emissive="#ff6600" emissiveIntensity={1.0} />
           </mesh>
+          <pointLight 
+            intensity={2} 
+            distance={4} 
+            color="#ff6600" 
+            decay={2}
+          />
         </group>
       )}
       

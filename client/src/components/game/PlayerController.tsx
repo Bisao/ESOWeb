@@ -23,10 +23,12 @@ export function PlayerController() {
   const movingRef = useRef(false);
   
   // Movement speed and state
-  const speed = 5;
-  const rotationSpeed = 2;
+  const speed = 8; // Increased for better responsiveness
+  const rotationSpeed = 3; // Increased for faster rotation
   const playerVelocity = useRef(new THREE.Vector3());
   const playerDirection = useRef(new THREE.Vector3());
+  const isJumping = useRef(false);
+  const jumpHeight = useRef(0);
   
   // Process keyboard input and update player movement
   useFrame((state, delta) => {
@@ -84,24 +86,30 @@ export function PlayerController() {
       // Apply movement in rotated direction
       playerVelocity.current.copy(playerDirection.current).multiplyScalar(speed * delta);
       
-      // Update position
+      // Calculate jump height for y position
+      const jumpOffset = isJumping.current ? Math.sin(jumpHeight.current) * 1.5 : 0;
+      
+      // Update position with improved movement
       updatePosition({
         x: character.position.x + playerVelocity.current.x,
-        y: character.position.y,
+        y: character.position.y + jumpOffset,
         z: character.position.z + playerVelocity.current.z
       });
     }
     
-    // Handle attack action
+    // Handle attack action with improved feedback
     if (attack && canAttack()) {
       setAttacking(true);
       sendAttackAction();
       playHit();
       
-      // Reset attack state after animation completes
+      // Add camera shake effect for attack impact
+      state.camera.position.y += 0.05;
+      
+      // Reset attack state after animation completes with smoother timing
       setTimeout(() => {
         setAttacking(false);
-      }, 500);
+      }, 400);
     }
     
     // UI toggle actions - only trigger on key down, not continuous press
