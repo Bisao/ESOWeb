@@ -27,24 +27,170 @@ export function Character() {
   // Get character color based on class
   const characterColor = classColors[character.class];
   
-  // Create simple character model
+  // Animation timing
+  const time = useRef(0);
+  useFrame((state, delta) => {
+    time.current += delta;
+  });
+
+  // Create articulated character model
   return (
     <group 
       ref={characterRef}
       position={[character.position.x, character.position.y, character.position.z]}
       rotation={[0, character.rotation, 0]}
     >
-      {/* Character body - color based on class */}
-      <mesh castShadow receiveShadow position={[0, 1, 0]}>
-        <boxGeometry args={[1, 2, 0.5]} />
+      {/* Character torso - color based on class */}
+      <mesh castShadow receiveShadow position={[0, 1.1, 0]}>
+        <boxGeometry args={[0.8, 0.9, 0.4]} />
+        <meshStandardMaterial color={characterColor} />
+      </mesh>
+      
+      {/* Character hip */}
+      <mesh castShadow receiveShadow position={[0, 0.6, 0]}>
+        <boxGeometry args={[0.6, 0.25, 0.35]} />
         <meshStandardMaterial color={characterColor} />
       </mesh>
       
       {/* Character head */}
-      <mesh castShadow position={[0, 2.2, 0]}>
-        <sphereGeometry args={[0.4, 16, 16]} />
+      <mesh castShadow position={[0, 1.8, 0]}>
+        <sphereGeometry args={[0.35, 16, 16]} />
         <meshStandardMaterial color="#f9c9b6" />
       </mesh>
+      
+      {/* Character eyes */}
+      <mesh position={[0.12, 1.85, 0.30]} rotation={[0, 0, 0]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="black" />
+      </mesh>
+      <mesh position={[-0.12, 1.85, 0.30]} rotation={[0, 0, 0]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="black" />
+      </mesh>
+      
+      {/* Left arm (animated) */}
+      <group position={[0.45, 1.35, 0]} rotation={[
+        0, 
+        0, 
+        character.moving ? Math.sin(time.current * 5) * 0.4 : 0
+      ]}>
+        {/* Upper arm */}
+        <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
+          <boxGeometry args={[0.2, 0.5, 0.2]} />
+          <meshStandardMaterial color={characterColor} />
+        </mesh>
+        
+        {/* Lower arm */}
+        <group position={[0, -0.5, 0]} rotation={[
+          character.moving ? Math.sin(time.current * 5 + 0.5) * 0.3 : 0,
+          0, 
+          0
+        ]}>
+          <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
+            <boxGeometry args={[0.18, 0.5, 0.18]} />
+            <meshStandardMaterial color="#f9c9b6" />
+          </mesh>
+          
+          {/* Hand */}
+          <mesh castShadow receiveShadow position={[0, -0.5, 0]}>
+            <boxGeometry args={[0.2, 0.15, 0.15]} />
+            <meshStandardMaterial color="#f9c9b6" />
+          </mesh>
+        </group>
+      </group>
+      
+      {/* Right arm (animated) */}
+      <group position={[-0.45, 1.35, 0]} rotation={[
+        0, 
+        0, 
+        character.moving ? -Math.sin(time.current * 5) * 0.4 : 0
+      ]}>
+        {/* Upper arm */}
+        <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
+          <boxGeometry args={[0.2, 0.5, 0.2]} />
+          <meshStandardMaterial color={characterColor} />
+        </mesh>
+        
+        {/* Lower arm */}
+        <group position={[0, -0.5, 0]} rotation={[
+          character.moving ? Math.sin(time.current * 5 + 0.5) * 0.3 : 0,
+          0, 
+          0
+        ]}>
+          <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
+            <boxGeometry args={[0.18, 0.5, 0.18]} />
+            <meshStandardMaterial color="#f9c9b6" />
+          </mesh>
+          
+          {/* Hand */}
+          <mesh castShadow receiveShadow position={[0, -0.5, 0]}>
+            <boxGeometry args={[0.2, 0.15, 0.15]} />
+            <meshStandardMaterial color="#f9c9b6" />
+          </mesh>
+        </group>
+      </group>
+      
+      {/* Left leg (animated) */}
+      <group position={[0.2, 0.5, 0]} rotation={[
+        character.moving ? -Math.sin(time.current * 5) * 0.5 : 0,
+        0, 
+        0
+      ]}>
+        {/* Upper leg */}
+        <mesh castShadow receiveShadow position={[0, -0.3, 0]}>
+          <boxGeometry args={[0.25, 0.6, 0.25]} />
+          <meshStandardMaterial color="#5555aa" />
+        </mesh>
+        
+        {/* Lower leg */}
+        <group position={[0, -0.6, 0]} rotation={[
+          character.moving ? Math.sin(time.current * 5 + 1) * 0.5 : 0,
+          0, 
+          0
+        ]}>
+          <mesh castShadow receiveShadow position={[0, -0.3, 0]}>
+            <boxGeometry args={[0.22, 0.6, 0.22]} />
+            <meshStandardMaterial color="#5555aa" />
+          </mesh>
+          
+          {/* Foot */}
+          <mesh castShadow receiveShadow position={[0, -0.6, 0.1]}>
+            <boxGeometry args={[0.25, 0.15, 0.45]} />
+            <meshStandardMaterial color="#444444" />
+          </mesh>
+        </group>
+      </group>
+      
+      {/* Right leg (animated) */}
+      <group position={[-0.2, 0.5, 0]} rotation={[
+        character.moving ? Math.sin(time.current * 5) * 0.5 : 0,
+        0, 
+        0
+      ]}>
+        {/* Upper leg */}
+        <mesh castShadow receiveShadow position={[0, -0.3, 0]}>
+          <boxGeometry args={[0.25, 0.6, 0.25]} />
+          <meshStandardMaterial color="#5555aa" />
+        </mesh>
+        
+        {/* Lower leg */}
+        <group position={[0, -0.6, 0]} rotation={[
+          character.moving ? -Math.sin(time.current * 5 + 1) * 0.5 : 0,
+          0, 
+          0
+        ]}>
+          <mesh castShadow receiveShadow position={[0, -0.3, 0]}>
+            <boxGeometry args={[0.22, 0.6, 0.22]} />
+            <meshStandardMaterial color="#5555aa" />
+          </mesh>
+          
+          {/* Foot */}
+          <mesh castShadow receiveShadow position={[0, -0.6, 0.1]}>
+            <boxGeometry args={[0.25, 0.15, 0.45]} />
+            <meshStandardMaterial color="#444444" />
+          </mesh>
+        </group>
+      </group>
       
       {/* Class-specific item */}
       {character.class === CharacterClass.Warrior && (
@@ -89,20 +235,31 @@ export function Character() {
         </group>
       )}
       
-      {/* Enhanced attack animation */}
+      {/* Enhanced attack animation with weapon swing */}
       {character.attacking && (
-        <group position={[1, 1.5, 0]}>
-          <mesh>
-            <sphereGeometry args={[0.4, 16, 16]} />
-            <meshStandardMaterial color="#ffaa00" emissive="#ff6600" emissiveIntensity={1.0} />
-          </mesh>
-          <pointLight 
-            intensity={2} 
-            distance={4} 
-            color="#ff6600" 
-            decay={2}
-          />
-        </group>
+        <>
+          {/* Attack effect */}
+          <group position={[1, 1.5, 0]}>
+            <mesh>
+              <sphereGeometry args={[0.4, 16, 16]} />
+              <meshStandardMaterial color="#ffaa00" emissive="#ff6600" emissiveIntensity={1.0} />
+            </mesh>
+            <pointLight 
+              intensity={2} 
+              distance={4} 
+              color="#ff6600" 
+              decay={2}
+            />
+          </group>
+          
+          {/* Attack arc */}
+          <group position={[0.8, 1.2, 0.5]}>
+            <mesh rotation={[0, 0, Math.PI / 4]}>
+              <torusGeometry args={[0.6, 0.05, 8, 8, Math.PI / 1.5]} />
+              <meshStandardMaterial color="#ff9900" emissive="#ff6600" emissiveIntensity={0.8} transparent opacity={0.7} />
+            </mesh>
+          </group>
+        </>
       )}
       
       {/* Debugging position display */}
