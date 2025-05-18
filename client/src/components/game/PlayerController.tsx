@@ -12,7 +12,7 @@ import { GamePhase } from '@shared/types';
 export function PlayerController() {
   const { character, updatePosition, updateRotation, setMoving, setAttacking, canAttack } = useCharacter();
   const { gamePhase, toggleInventory, toggleStats, switchCamera } = useMMOGame();
-  const { sendPlayerUpdate, sendAttackAction } = useMultiplayer();
+  const { updatePosition: updateMultiplayerPosition, sendAttack: sendAttackAction, isConnected } = useMultiplayer();
   const { playHit } = useAudio();
   
   // Get keyboard controls without causing re-renders
@@ -100,7 +100,12 @@ export function PlayerController() {
     // Handle attack action with improved feedback
     if (attack && canAttack()) {
       setAttacking(true);
-      sendAttackAction();
+      
+      // Send attack action to server if connected
+      if (character && isConnected()) {
+        sendAttackAction(character.position, character.rotation);
+      }
+      
       playHit();
       
       // Add camera shake effect for attack impact
@@ -116,9 +121,14 @@ export function PlayerController() {
     const now = Date.now();
     
     // Send position updates to server periodically (100ms)
-    if (now - lastUpdateRef.current > 100) {
+    if (now - lastUpdateRef.current > 100 && character && isConnected()) {
       lastUpdateRef.current = now;
-      sendPlayerUpdate();
+      updateMultiplayerPosition(
+        character.position,
+        character.rotation, 
+        movingRef.current,
+        character.attacking
+      );
     }
   });
   
