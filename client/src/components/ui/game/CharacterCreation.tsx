@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function CharacterCreation() {
   const [name, setName] = useState('');
-  const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
+  const [selectedClass, setSelectedClass] = useState<CharacterClass>(CharacterClass.Warrior);
   const [nameError, setNameError] = useState('');
   
   const { createCharacter } = useCharacter();
@@ -28,10 +28,7 @@ export function CharacterCreation() {
       return;
     }
     
-    // Validate class selection
-    if (!selectedClass) {
-      return;
-    }
+    // Class selection is now pre-selected with Warrior
     
     // Create character
     setPlayerName(name);
