@@ -16,21 +16,16 @@ export function Camera() {
   const smoothFactor = useRef(0.15); // Increased smoothness
   
   // Smoothly follow player
-  useFrame((state) => {
+  useFrame(() => {
     if (!character) return;
     
     // Calculate camera position based on camera type
     if (cameraType === 'thirdPerson') {
-      const { mouse, viewport } = state;
-      
-      // Calculate camera rotation based on mouse position
-      const cameraAngle = Math.atan2(mouse.x * viewport.width, mouse.y * viewport.height);
-      
-      // Position camera behind player with mouse-based rotation
+      // Position camera behind player
       cameraPosition.current.set(
-        character.position.x - Math.sin(cameraAngle) * 8,
+        character.position.x - Math.sin(character.rotation) * 8,
         character.position.y + 5,
-        character.position.z - Math.cos(cameraAngle) * 8
+        character.position.z - Math.cos(character.rotation) * 8
       );
       
       // Look at player position plus small offset in direction of movement
