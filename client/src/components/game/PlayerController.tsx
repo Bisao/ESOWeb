@@ -70,6 +70,9 @@ export function PlayerController() {
       const moveAngle = Math.atan2(moveX, moveZ);
       const finalAngle = moveAngle + character.rotation;
       
+      // Calculate angle difference
+      const angleDiff = finalAngle - character.rotation;
+      
       // Normalize angle difference to [-PI, PI]
       const normalizedDiff = ((angleDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
       
