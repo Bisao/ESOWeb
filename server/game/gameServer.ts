@@ -117,9 +117,14 @@ export function setupGameServer(httpServer: Server) {
 
 // Process attack - check for hits and apply damage
 function processAttack(io: SocketIOServer, attackerId: string, position: Position, rotation: number) {
+  console.log(`Processing attack from player ${attackerId}`);
   // Get the attacker
   const attacker = getPlayer(attackerId);
-  if (!attacker) return;
+  if (!attacker) {
+    console.log(`Player ${attackerId} not found`);
+    return;
+  }
+  console.log(`Current players in game: ${Object.keys(getPlayers()).length}`);
   
   // Get all players
   const players = getPlayers();

@@ -6,7 +6,7 @@ const players: Record<string, PlayerState> = {};
 // Add a player to the game
 export function addPlayer(player: PlayerState): void {
   players[player.character.id] = player;
-  console.log(`Added player: ${player.character.name} (${player.character.id})`);
+  console.log(`Player ${player.character.id} added. Total players: ${Object.keys(players).length}`);
 }
 
 // Remove a player from the game
@@ -36,14 +36,14 @@ export function updatePlayer(
   attacking: boolean
 ): void {
   const player = players[playerId];
-  
+
   if (player) {
     // Update position
     player.character.position = position;
-    
+
     // Update rotation
     player.character.rotation = rotation;
-    
+
     // Update state
     player.character.moving = moving;
     player.character.attacking = attacking;
