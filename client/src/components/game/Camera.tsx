@@ -15,7 +15,8 @@ export function Camera() {
   // Lock/unlock pointer based on game phase
   useEffect(() => {
     if (controlsRef.current) {
-      if (gamePhase === GamePhase.Playing) {
+      const shouldLock = gamePhase === GamePhase.Playing || gamePhase === GamePhase.CharacterCreation;
+      if (!shouldLock) {
         controlsRef.current.lock();
       } else {
         controlsRef.current.unlock();
