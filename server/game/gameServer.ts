@@ -18,7 +18,9 @@ export function setupGameServer(httpServer: Server) {
     cors: {
       origin: '*',
       methods: ['GET', 'POST']
-    }
+    },
+    pingTimeout: 60000,
+    pingInterval: 25000
   });
   
   console.log('Game server initialized');

@@ -123,12 +123,15 @@ export function PlayerController() {
     // Send position updates to server periodically (100ms)
     if (now - lastUpdateRef.current > 100 && character && isConnected()) {
       lastUpdateRef.current = now;
-      updateMultiplayerPosition(
-        character.position,
-        character.rotation, 
-        movingRef.current,
-        character.attacking
-      );
+      // Only send update if we have valid position data
+      if (character.position && typeof character.rotation === 'number') {
+        updateMultiplayerPosition(
+          character.position,
+          character.rotation, 
+          movingRef.current || false,
+          character.attacking || false
+        );
+      }
     }
   });
   
