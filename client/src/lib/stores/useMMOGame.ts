@@ -1,66 +1,109 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { GamePhase, CharacterClass } from '@shared/types';
-import * as THREE from 'three';
-import { v4 as uuidv4 } from 'uuid';
+import { GamePhase } from '@shared/types';
 
-// Define the types for the game state
 interface MMOGameState {
-  playerId: string;
-  playerName: string;
+  // Game state
   gamePhase: GamePhase;
-  selectedClass: CharacterClass | null;
-  isConnected: boolean;
-  cameraType: 'thirdPerson' | 'firstPerson';
-  showDebug: boolean;
-
-  // Actions
-  setPlayerId: (id: string) => void;
+  playerId: string | null;
   hostId: string | null;
-  setHostId: (id: string | null) => void;
-  isHost: () => boolean;
-  setPlayerName: (name: string) => void;
+  connected: boolean;
+  inventoryOpen: boolean;
+  statsOpen: boolean;
+  cameraMode: 'first' | 'third';
+  
+  // Auth state
+  loggedIn: boolean;
+  username: string | null;
+  
+  // Actions
   setGamePhase: (phase: GamePhase) => void;
-  setSelectedClass: (characterClass: CharacterClass) => void;
+  setPlayerId: (id: string | null) => void;
+  setHostId: (id: string | null) => void;
+  setConnected: (connected: boolean) => void;
   toggleInventory: () => void;
   toggleStats: () => void;
-  toggleDebug: () => void;
   switchCamera: () => void;
-  setConnected: (connected: boolean) => void;
+  
+  // Auth actions
+  setLoggedIn: (loggedIn: boolean) => void;
+  setUsername: (username: string | null) => void;
+  logout: () => void;
 }
 
 export const useMMOGame = create<MMOGameState>()(
-  subscribeWithSelector((set, get) => ({
-    playerId: uuidv4(), // Generate a unique ID for this player
-    playerName: '',
-    gamePhase: GamePhase.CharacterCreation,
-    selectedClass: null,
-    isConnected: false,
-    cameraType: 'thirdPerson',
-    showDebug: false,
+  subscribeWithSelector((set) => ({
+    // Game state
+    gamePhase: GamePhase.Lobby,
+    playerId: null,
     hostId: null,
-
-    // Actions
+    connected: false,
+    inventoryOpen: false,
+    statsOpen: false,
+    cameraMode: 'third',
+    
+    // Auth state
+    loggedIn: false,
+    username: null,
+    
+    // Game actions
+    setGamePhase: (phase) => set({ gamePhase: phase }),
     setPlayerId: (id) => set({ playerId: id }),
     setHostId: (id) => set({ hostId: id }),
-    isHost: () => get().playerId === get().hostId,
-    setPlayerName: (name) => set({ playerName: name }),
-    setGamePhase: (phase) => set({ gamePhase: phase }),
-    setSelectedClass: (characterClass) => set({ selectedClass: characterClass }),
-    toggleInventory: () => set((state) => ({
-      gamePhase: state.gamePhase === GamePhase.Inventory 
+    setConnected: (connected) => set({ connected }),
+    
+    toggleInventory: () => set((state) => {
+      // Só pode abrir o inventário durante o jogo
+      if (state.gamePhase !== GamePhase.Playing && !state.inventoryOpen) {
+        return state;
+      }
+      
+      // Atualiza a fase do jogo
+      const newPhase = state.inventoryOpen 
         ? GamePhase.Playing 
-        : GamePhase.Inventory
-    })),
-    toggleStats: () => set((state) => ({
-      gamePhase: state.gamePhase === GamePhase.Stats 
+        : GamePhase.Inventory;
+      
+      return { 
+        inventoryOpen: !state.inventoryOpen,
+        gamePhase: newPhase,
+        // Fecha o painel de stats se estiver aberto
+        statsOpen: false
+      };
+    }),
+    
+    toggleStats: () => set((state) => {
+      // Só pode abrir as stats durante o jogo
+      if (state.gamePhase !== GamePhase.Playing && !state.statsOpen) {
+        return state;
+      }
+      
+      // Atualiza a fase do jogo
+      const newPhase = state.statsOpen 
         ? GamePhase.Playing 
-        : GamePhase.Stats
-    })),
-    toggleDebug: () => set((state) => ({ showDebug: !state.showDebug })),
+        : GamePhase.Stats;
+      
+      return { 
+        statsOpen: !state.statsOpen,
+        gamePhase: newPhase,
+        // Fecha o inventário se estiver aberto
+        inventoryOpen: false
+      };
+    }),
+    
     switchCamera: () => set((state) => ({
-      cameraType: state.cameraType === 'thirdPerson' ? 'firstPerson' : 'thirdPerson'
+      cameraMode: state.cameraMode === 'first' ? 'third' : 'first'
     })),
-    setConnected: (connected) => set({ isConnected: connected }),
+    
+    // Auth actions
+    setLoggedIn: (loggedIn) => set({ loggedIn }),
+    setUsername: (username) => set({ username }),
+    logout: () => set({ 
+      loggedIn: false, 
+      username: null,
+      gamePhase: GamePhase.Lobby,
+      playerId: null,
+      inventoryOpen: false,
+      statsOpen: false
+    })
   }))
 );

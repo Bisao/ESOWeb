@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { Inventory, Item, ItemType } from '@shared/types';
+import { useCharacter } from './useCharacter';
 
 // Define the types for the inventory state
 interface InventoryState {
@@ -11,10 +12,13 @@ interface InventoryState {
   addItem: (item: Item) => boolean; // Returns false if inventory is full
   removeItem: (index: number) => Item | null;
   useItem: (index: number) => void;
+  equipItem: (index: number) => void;
+  unequipItem: (slot: 'weapon' | 'armor' | 'helmet') => void;
   addGold: (amount: number) => void;
   removeGold: (amount: number) => boolean; // Returns false if not enough gold
   selectItem: (index: number | null) => void;
   dropItem: (index: number) => Item | null;
+  getEquippedItems: () => { weapon: Item | null, armor: Item | null, helmet: Item | null };
 }
 
 // Create default inventory
@@ -27,27 +31,30 @@ const defaultInventory: Inventory = {
 // Create some starting items for testing
 const startingItems: Item[] = [
   {
-    id: '1',
+    id: 'weapon_1',
     name: 'Rusty Sword',
     type: ItemType.Weapon,
     value: 10,
     description: 'A rusty but serviceable sword.',
+    icon: 'sword_icon.png',
     stats: { strength: 5 }
   },
   {
-    id: '2',
+    id: 'armor_1',
     name: 'Leather Armor',
     type: ItemType.Armor,
     value: 15,
     description: 'Simple leather armor for basic protection.',
+    icon: 'armor_icon.png',
     stats: { maxHealth: 10 }
   },
   {
-    id: '3',
+    id: 'potion_1',
     name: 'Health Potion',
     type: ItemType.Potion,
     value: 5,
     description: 'Restores 25 health when consumed.',
+    icon: 'potion_icon.png'
   }
 ];
 
@@ -61,11 +68,14 @@ export const useInventory = create<InventoryState>()(
     
     // Add an item to inventory if there is space
     addItem: (item) => {
-      const success = set((state) => {
+      let success = false;
+      
+      set((state) => {
         if (state.inventory.items.length >= state.inventory.maxSlots) {
-          return { inventory: state.inventory }; // Inventory full
+          return state; // Inventory full
         }
         
+        success = true;
         return {
           inventory: {
             ...state.inventory,
@@ -83,7 +93,7 @@ export const useInventory = create<InventoryState>()(
       
       set((state) => {
         if (index < 0 || index >= state.inventory.items.length) {
-          return { inventory: state.inventory };
+          return state;
         }
         
         // Get the item that's being removed
@@ -108,9 +118,83 @@ export const useInventory = create<InventoryState>()(
     
     // Use an item (potions, etc)
     useItem: (index) => {
-      // Implementation depends on item type and game mechanics
-      // For potions, this could apply healing
-      // For equipment, this could equip the item
+      const { inventory } = get();
+      if (index < 0 || index >= inventory.items.length) return;
+      
+      const item = inventory.items[index];
+      
+      // Verificar o tipo do item
+      switch (item.type) {
+        case ItemType.Potion:
+          // Aplicar efeito da poção (cura)
+          if (item.stats?.health) {
+            useCharacter.getState().heal(item.stats.health);
+          } else {
+            // Poção padrão cura 25 de vida
+            useCharacter.getState().heal(25);
+          }
+          
+          // Remover a poção do inventário após uso
+          get().removeItem(index);
+          break;
+          
+        case ItemType.Weapon:
+        case ItemType.Armor:
+          // Equipar o item
+          get().equipItem(index);
+          break;
+      }
+    },
+    
+    // Equipar um item
+    equipItem: (index) => {
+      const { inventory } = get();
+      if (index < 0 || index >= inventory.items.length) return;
+      
+      const item = inventory.items[index];
+      const characterState = useCharacter.getState();
+      
+      // Determinar o slot com base no tipo do item
+      let slot: 'weapon' | 'armor' | 'helmet';
+      
+      switch (item.type) {
+        case ItemType.Weapon:
+          slot = 'weapon';
+          break;
+        case ItemType.Armor:
+          // Verificar se é um capacete ou armadura pelo nome ou propriedades
+          if (item.name.toLowerCase().includes('helmet') || 
+              item.name.toLowerCase().includes('cap') || 
+              item.name.toLowerCase().includes('hood')) {
+            slot = 'helmet';
+          } else {
+            slot = 'armor';
+          }
+          break;
+        default:
+          // Não é um item equipável
+          return;
+      }
+      
+      // Desequipar item atual do mesmo slot, se houver
+      const currentEquipped = characterState[`equipped${slot.charAt(0).toUpperCase() + slot.slice(1)}`];
+      
+      // Equipar o novo item
+      characterState.equipItem(slot, item.id);
+      
+      // Atualizar a interface (se necessário)
+      console.log(`Equipado ${item.name} no slot ${slot}`);
+    },
+    
+    // Desequipar um item
+    unequipItem: (slot) => {
+      const characterState = useCharacter.getState();
+      
+      // Desequipar o item
+      characterState.unequipItem(slot);
+      
+      // Atualizar a interface (se necessário)
+      console.log(`Item desequipado do slot ${slot}`);
     },
     
     // Add gold to inventory
@@ -129,7 +213,7 @@ export const useInventory = create<InventoryState>()(
       
       set((state) => {
         if (state.inventory.gold < amount) {
-          return { inventory: state.inventory }; // Not enough gold
+          return state; // Not enough gold
         }
         
         success = true;
@@ -152,6 +236,23 @@ export const useInventory = create<InventoryState>()(
     // Drop an item (remove from inventory)
     dropItem: (index) => {
       return get().removeItem(index);
+    },
+    
+    // Obter itens equipados
+    getEquippedItems: () => {
+      const { inventory } = get();
+      const characterState = useCharacter.getState();
+      
+      const equippedWeaponId = characterState.equippedWeapon;
+      const equippedArmorId = characterState.equippedArmor;
+      const equippedHelmetId = characterState.equippedHelmet;
+      
+      // Encontrar os itens correspondentes no inventário
+      const weapon = inventory.items.find(item => item.id === equippedWeaponId) || null;
+      const armor = inventory.items.find(item => item.id === equippedArmorId) || null;
+      const helmet = inventory.items.find(item => item.id === equippedHelmetId) || null;
+      
+      return { weapon, armor, helmet };
     }
   }))
 );

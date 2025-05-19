@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -14,6 +14,7 @@ export function PlayerController() {
   const { gamePhase, toggleInventory, toggleStats, switchCamera } = useMMOGame();
   const { updatePosition: updateMultiplayerPosition, sendAttack: sendAttackAction, isConnected } = useMultiplayer();
   const { playHit } = useAudio();
+  const [pointerLocked, setPointerLocked] = useState(false);
 
   // Get keyboard controls without causing re-renders
   const [, getKeys] = useKeyboardControls<Controls>();
@@ -35,44 +36,98 @@ export function PlayerController() {
   // Track mouse movement
   const { viewport } = useThree();
   const mouseSensitivity = 0.003;
+  const gameCanvasRef = useRef<HTMLElement | null>(null);
+
+  // Função para garantir que o pointer lock seja mantido
+  const ensurePointerLock = () => {
+    if (gamePhase === GamePhase.Playing && !pointerLocked) {
+      const canvas = document.querySelector('canvas');
+      if (canvas && document.pointerLockElement !== canvas) {
+        try {
+          canvas.requestPointerLock();
+          gameCanvasRef.current = canvas;
+        } catch (err) {
+          console.error("Falha ao travar o cursor:", err);
+        }
+      }
+    }
+  };
+
+  // Monitora cliques no canvas para reativar o pointer lock
+  useEffect(() => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      gameCanvasRef.current = canvas;
+      
+      const handleCanvasClick = () => {
+        if (gamePhase === GamePhase.Playing && !pointerLocked) {
+          ensurePointerLock();
+        }
+      };
+      
+      canvas.addEventListener('click', handleCanvasClick);
+      return () => {
+        canvas.removeEventListener('click', handleCanvasClick);
+      };
+    }
+  }, [gamePhase, pointerLocked]);
 
   useEffect(() => {
     const onMouseMove = (event: MouseEvent) => {
-      if (character && gamePhase === GamePhase.Playing) {
+      if (character && gamePhase === GamePhase.Playing && pointerLocked) {
         updateRotation(character.rotation - event.movementX * mouseSensitivity);
       }
     };
 
     const onPointerLockChange = () => {
-      if (document.pointerLockElement === document.body) {
+      const canvas = gameCanvasRef.current;
+      const isLocked = document.pointerLockElement === canvas;
+      setPointerLocked(isLocked);
+      
+      if (isLocked) {
         document.addEventListener('mousemove', onMouseMove);
         document.body.style.cursor = 'none';
-      } else if (gamePhase === GamePhase.Playing) {
-        // Se o jogo estiver rodando mas o pointer lock foi perdido, tenta recuperar
-        document.body.requestPointerLock().catch(() => {
-          console.log("Não foi possível travar o cursor");
-        });
-        document.addEventListener('mousemove', onMouseMove);
       } else {
         document.removeEventListener('mousemove', onMouseMove);
         document.body.style.cursor = 'auto';
+        
+        // Tenta recuperar o pointer lock se o jogo ainda estiver rodando
+        if (gamePhase === GamePhase.Playing) {
+          // Pequeno atraso para evitar problemas com eventos de clique
+          setTimeout(ensurePointerLock, 100);
+        }
       }
+    };
+
+    const onPointerLockError = (e: Event) => {
+      console.error("Erro no Pointer Lock:", e);
+      setPointerLocked(false);
+      document.body.style.cursor = 'auto';
     };
 
     // Ativa o pointer lock quando o jogo começa
     if (gamePhase === GamePhase.Playing) {
-      document.body.requestPointerLock().catch(() => {
-        console.log("Não foi possível travar o cursor");
-      });
+      ensurePointerLock();
     }
 
+    // Adiciona listeners para monitorar o estado do pointer lock
     document.addEventListener('pointerlockchange', onPointerLockChange);
+    document.addEventListener('pointerlockerror', onPointerLockError);
     document.addEventListener('mousemove', onMouseMove);
+
+    // Tenta recuperar o pointer lock se o usuário alternar entre abas/janelas
+    window.addEventListener('focus', ensurePointerLock);
+    window.addEventListener('blur', () => setPointerLocked(false));
 
     return () => {
       document.removeEventListener('pointerlockchange', onPointerLockChange);
+      document.removeEventListener('pointerlockerror', onPointerLockError);
       document.removeEventListener('mousemove', onMouseMove);
-      if (document.pointerLockElement === document.body) {
+      window.removeEventListener('focus', ensurePointerLock);
+      window.removeEventListener('blur', () => setPointerLocked(false));
+      
+      // Libera o pointer lock ao desmontar o componente
+      if (document.pointerLockElement === gameCanvasRef.current) {
         document.exitPointerLock();
       }
     };
@@ -80,6 +135,11 @@ export function PlayerController() {
 
   useFrame((state, delta) => {
     if (!character || gamePhase !== GamePhase.Playing) return;
+
+    // Verifica se o pointer lock está ativo, se não, tenta reativá-lo
+    if (!pointerLocked && gamePhase === GamePhase.Playing) {
+      ensurePointerLock();
+    }
 
     const {
       forward,
@@ -174,6 +234,9 @@ export function PlayerController() {
         toggleStats();
       } else if (e.code === 'KeyV') {
         switchCamera();
+      } else if (e.code === 'Escape' && pointerLocked) {
+        // Permite que o ESC libere o cursor, mas mantém o jogo rodando
+        document.exitPointerLock();
       }
     };
 
@@ -181,7 +244,7 @@ export function PlayerController() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [toggleInventory, toggleStats, switchCamera]);
+  }, [toggleInventory, toggleStats, switchCamera, pointerLocked]);
 
   return null;
 }
