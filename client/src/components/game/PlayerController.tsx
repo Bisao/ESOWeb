@@ -43,12 +43,21 @@ export function PlayerController() {
       }
     };
 
+    const onClick = () => {
+      if (document.pointerLockElement !== document.body) {
+        document.body.requestPointerLock();
+      }
+    };
+
     document.addEventListener('mousemove', onMouseMove);
-    document.body.requestPointerLock();
+    document.addEventListener('click', onClick);
 
     return () => {
       document.removeEventListener('mousemove', onMouseMove);
-      document.exitPointerLock();
+      document.removeEventListener('click', onClick);
+      if (document.pointerLockElement === document.body) {
+        document.exitPointerLock();
+      }
     };
   }, [character, gamePhase]);
 
