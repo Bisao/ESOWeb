@@ -123,6 +123,15 @@ export function GameHUD() {
         </div>
       )}
       
+      {/* Crosshair */}
+      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="w-6 h-6 flex items-center justify-center">
+          <div className="w-1 h-1 bg-white rounded-full"></div>
+          <div className="absolute w-4 h-[2px] bg-white"></div>
+          <div className="absolute w-[2px] h-4 bg-white"></div>
+        </div>
+      </div>
+
       {/* Class indicator */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-1 rounded">
         <span className="text-sm text-white">
