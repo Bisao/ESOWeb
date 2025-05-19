@@ -82,8 +82,7 @@ export function PlayerController() {
     }
 
     // Handle attack action with improved feedback
-    // Verifica se houve clique do mouse ou tecla de ataque
-  if ((attack || controls.attack) && canAttack()) {
+    if (attack && canAttack()) {
       setAttacking(true);
 
       // Send attack action to server if connected

@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { KeyboardControls, Sky, Stats, useKeyboardControls } from '@react-three/drei';
+import { KeyboardControls, Sky, Stats } from '@react-three/drei';
 import * as THREE from 'three';
 import { useMMOGame } from '@/lib/stores/useMMOGame';
 import { GamePhase } from '@shared/types';
@@ -54,30 +54,6 @@ export function GameScene() {
     };
   }, [gamePhase, connect, disconnect]);
   
-  const [controls] = useKeyboardControls<Controls>();
-
-  const handleMouseDown = (e: MouseEvent) => {
-    if (e.button === 0) { // Botão esquerdo
-      useKeyboardControls.setState({ [Controls.attack]: true });
-    }
-  };
-
-  const handleMouseUp = (e: MouseEvent) => {
-    if (e.button === 0) {
-      useKeyboardControls.setState({ [Controls.attack]: false });
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-    
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, []);
-
   return (
     <KeyboardControls map={keyMap}>
       <Canvas
