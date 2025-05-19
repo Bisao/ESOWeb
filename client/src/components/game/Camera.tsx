@@ -24,7 +24,7 @@ export function Camera() {
       // Position camera behind player and slightly to the left
       cameraPosition.current.set(
         character.position.x - Math.sin(character.rotation) * 8 - 1, // Reduced offset for less extreme positioning
-        character.position.y + 5,
+        character.position.y + 4,
         character.position.z - Math.cos(character.rotation) * 8
       );
       
