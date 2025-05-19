@@ -32,6 +32,26 @@ export function PlayerController() {
   const jumpHeight = useRef(0);
 
   // Process keyboard input and update player movement
+  // Track mouse movement
+  const { viewport } = useThree();
+  const mouseSensitivity = 0.003;
+
+  useEffect(() => {
+    const onMouseMove = (event: MouseEvent) => {
+      if (character && gamePhase === GamePhase.Playing) {
+        updateRotation(character.rotation - event.movementX * mouseSensitivity);
+      }
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.body.requestPointerLock();
+
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.exitPointerLock();
+    };
+  }, [character, gamePhase]);
+
   useFrame((state, delta) => {
     if (!character || gamePhase !== GamePhase.Playing) return;
 

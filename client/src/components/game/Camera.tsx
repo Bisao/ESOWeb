@@ -9,11 +9,12 @@ export function Camera() {
   const { cameraType } = useMMOGame();
   const { camera } = useThree();
   
-  // Enhanced camera settings
-  const cameraOffset = useRef(new THREE.Vector3(0, 6, 12)); // Adjusted for better view
+  // Enhanced camera settings for FPS-style
+  const cameraOffset = useRef(new THREE.Vector3(0, 6, 12));
   const cameraLookAt = useRef(new THREE.Vector3());
   const cameraPosition = useRef(new THREE.Vector3());
-  const smoothFactor = useRef(0.15); // Increased smoothness
+  const smoothFactor = useRef(0.2); // Faster response for aiming
+  const rotationSmooth = useRef(0.3); // Smooth rotation follow
   
   // Smoothly follow player
   useFrame(() => {
