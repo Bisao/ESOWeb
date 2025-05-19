@@ -36,8 +36,15 @@ canvas {
 }
 
 /* Esconde o cursor quando pointer lock estiver ativo */
-:root:has(:active[data-pointerlock]) {
+:root:has(:active[data-pointerlock]),
+:root:has(body:active) {
   cursor: none !important;
+}
+
+/* Previne seleção de texto durante o jogo */
+body.cursor-locked {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 canvas::-webkit-context-menu {

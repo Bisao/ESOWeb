@@ -46,10 +46,25 @@ export function PlayerController() {
     const onPointerLockChange = () => {
       if (document.pointerLockElement === document.body) {
         document.addEventListener('mousemove', onMouseMove);
+        document.body.style.cursor = 'none';
+      } else if (gamePhase === GamePhase.Playing) {
+        // Se o jogo estiver rodando mas o pointer lock foi perdido, tenta recuperar
+        document.body.requestPointerLock().catch(() => {
+          console.log("Não foi possível travar o cursor");
+        });
+        document.addEventListener('mousemove', onMouseMove);
       } else {
         document.removeEventListener('mousemove', onMouseMove);
+        document.body.style.cursor = 'auto';
       }
     };
+
+    // Ativa o pointer lock quando o jogo começa
+    if (gamePhase === GamePhase.Playing) {
+      document.body.requestPointerLock().catch(() => {
+        console.log("Não foi possível travar o cursor");
+      });
+    }
 
     document.addEventListener('pointerlockchange', onPointerLockChange);
     document.addEventListener('mousemove', onMouseMove);
