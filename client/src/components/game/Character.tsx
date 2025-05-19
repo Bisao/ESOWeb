@@ -59,14 +59,27 @@ export function Character() {
       </mesh>
       
       {/* Character eyes */}
-      <mesh position={[0.12, 1.85, 0.30]} rotation={[0, 0, 0]}>
-        <sphereGeometry args={[0.05, 8, 8]} />
-        <meshStandardMaterial color="black" />
-      </mesh>
-      <mesh position={[-0.12, 1.85, 0.30]} rotation={[0, 0, 0]}>
-        <sphereGeometry args={[0.05, 8, 8]} />
-        <meshStandardMaterial color="black" />
-      </mesh>
+      <group position={[0, 1.85, 0.3]}>
+        {/* Eye whites */}
+        <mesh position={[0.12, 0, 0]}>
+          <sphereGeometry args={[0.08, 16, 16]} />
+          <meshStandardMaterial color="white" />
+        </mesh>
+        <mesh position={[-0.12, 0, 0]}>
+          <sphereGeometry args={[0.08, 16, 16]} />
+          <meshStandardMaterial color="white" />
+        </mesh>
+        
+        {/* Eye pupils */}
+        <mesh position={[0.12, 0, 0.04]}>
+          <sphereGeometry args={[0.04, 16, 16]} />
+          <meshStandardMaterial color="black" />
+        </mesh>
+        <mesh position={[-0.12, 0, 0.04]}>
+          <sphereGeometry args={[0.04, 16, 16]} />
+          <meshStandardMaterial color="black" />
+        </mesh>
+      </group>
       
       {/* Left arm (animated with elbow) */}
       <group position={[0.45, 1.35, 0]} rotation={[
