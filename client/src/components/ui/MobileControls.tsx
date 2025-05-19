@@ -63,7 +63,7 @@ export function MobileControls() {
       </div>
       
       {/* Action buttons */}
-      <div className="absolute bottom-6 right-6 flex flex-col gap-3 items-end pointer-events-auto">
+      <div className="absolute bottom-24 right-6 flex flex-col gap-3 items-end pointer-events-auto">
         {/* Attack button */}
         <MobileButton 
           label="ATTACK" 

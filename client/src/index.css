@@ -38,3 +38,12 @@ canvas {
 canvas::-webkit-context-menu {
   display: none;
 }
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; display: none; }
+}
+
+.animate-fade-out {
+  animation: fadeOut 1s ease-in-out 5s forwards;
+}

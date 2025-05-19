@@ -109,17 +109,19 @@ export function GameHUD() {
         </Button>
       </div>
       
-      {/* Controls help */}
-      <div className="absolute bottom-28 right-4 p-4 bg-black/70 rounded text-white text-sm">
-        <h3 className="font-bold mb-2">Controls</h3>
-        <ul className="space-y-1">
-          <li>WASD / Arrows: Move</li>
-          <li>F: Attack</li>
-          <li>I: Toggle Inventory</li>
-          <li>C: Toggle Character Stats</li>
-          <li>V: Switch Camera</li>
-        </ul>
-      </div>
+      {/* Controls help - only show initially */}
+      {gamePhase === GamePhase.Playing && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 p-4 bg-black/70 rounded text-white text-sm max-w-[90vw] md:max-w-xs animate-fade-out" style={{animation: 'fadeOut 1s ease-in-out 5s forwards'}}>
+          <h3 className="font-bold mb-2">Controls</h3>
+          <ul className="space-y-1">
+            <li>WASD / Arrows: Move</li>
+            <li>F: Attack</li>
+            <li>I: Toggle Inventory</li>
+            <li>C: Toggle Character Stats</li>
+            <li>V: Switch Camera</li>
+          </ul>
+        </div>
+      )}
       
       {/* Class indicator */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-1 rounded">
