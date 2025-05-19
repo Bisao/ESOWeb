@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { KeyboardControls, Sky, Stats } from '@react-three/drei';
+import { KeyboardControls, Sky, Stats, useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useMMOGame } from '@/lib/stores/useMMOGame';
 import { GamePhase } from '@shared/types';
