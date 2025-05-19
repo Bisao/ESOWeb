@@ -35,6 +35,11 @@ canvas {
   user-select: none;
 }
 
+/* Esconde o cursor quando pointer lock estiver ativo */
+:root:has(:active[data-pointerlock]) {
+  cursor: none !important;
+}
+
 canvas::-webkit-context-menu {
   display: none;
 }
