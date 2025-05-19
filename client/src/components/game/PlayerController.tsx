@@ -43,14 +43,6 @@ export function PlayerController() {
       }
     };
 
-    const onClick = () => {
-      if (document.pointerLockElement !== document.body) {
-        document.body.requestPointerLock().catch(() => {
-          console.log("Pointer lock request was denied");
-        });
-      }
-    };
-
     const onPointerLockChange = () => {
       if (document.pointerLockElement === document.body) {
         document.addEventListener('mousemove', onMouseMove);
@@ -60,12 +52,11 @@ export function PlayerController() {
     };
 
     document.addEventListener('pointerlockchange', onPointerLockChange);
-    document.addEventListener('click', onClick);
+    document.addEventListener('mousemove', onMouseMove);
 
     return () => {
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('click', onClick);
       if (document.pointerLockElement === document.body) {
         document.exitPointerLock();
       }

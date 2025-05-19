@@ -11,10 +11,10 @@ export function CharacterCreation() {
   const [name, setName] = useState('');
   const [selectedClass, setSelectedClass] = useState<CharacterClass>(CharacterClass.Warrior);
   const [nameError, setNameError] = useState('');
-  
+
   const { createCharacter } = useCharacter();
   const { setPlayerName } = useMMOGame();
-  
+
   // Handle character creation
   const handleCreate = () => {
     // Validate name
@@ -22,19 +22,20 @@ export function CharacterCreation() {
       setNameError('Please enter a character name');
       return;
     }
-    
+
     if (name.length < 3 || name.length > 16) {
       setNameError('Name must be between 3 and 16 characters');
       return;
     }
-    
+
     // Class selection is now pre-selected with Warrior
-    
+
     // Create character
     setPlayerName(name);
     createCharacter(name, selectedClass);
+    document.body.requestPointerLock(); // Request pointer lock after character creation
   };
-  
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <Card className="w-full max-w-3xl bg-white">
@@ -44,7 +45,7 @@ export function CharacterCreation() {
             Choose your name and class to begin your adventure
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <div className="space-y-6">
             {/* Character name input */}
@@ -67,18 +68,18 @@ export function CharacterCreation() {
                 <p className="text-sm text-red-500">{nameError}</p>
               )}
             </div>
-            
+
             {/* Class selection */}
             <div className="space-y-2">
               <h3 className="text-lg font-medium">Choose Class</h3>
-              
+
               <Tabs defaultValue="warrior" onValueChange={(v) => setSelectedClass(v as CharacterClass)}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value={CharacterClass.Warrior}>Warrior</TabsTrigger>
                   <TabsTrigger value={CharacterClass.Mage}>Mage</TabsTrigger>
                   <TabsTrigger value={CharacterClass.Archer}>Archer</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value={CharacterClass.Warrior} className="mt-4">
                   <ClassCard
                     name="Warrior"
@@ -87,7 +88,7 @@ export function CharacterCreation() {
                     color="#ff5555"
                   />
                 </TabsContent>
-                
+
                 <TabsContent value={CharacterClass.Mage} className="mt-4">
                   <ClassCard
                     name="Mage"
@@ -96,7 +97,7 @@ export function CharacterCreation() {
                     color="#5555ff"
                   />
                 </TabsContent>
-                
+
                 <TabsContent value={CharacterClass.Archer} className="mt-4">
                   <ClassCard
                     name="Archer"
@@ -109,7 +110,7 @@ export function CharacterCreation() {
             </div>
           </div>
         </CardContent>
-        
+
         <CardFooter>
           <Button 
             onClick={handleCreate} 
@@ -133,13 +134,13 @@ function ClassCard({ name, description, stats, color }: any) {
           {name.charAt(0)}
         </div>
       </div>
-      
+
       <div className="flex-1 space-y-4">
         <div>
           <h3 className="text-xl font-bold">{name}</h3>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-2 text-sm">
           <StatRow label="Health" value={stats.health} />
           <StatRow label="Mana" value={stats.mana} />
