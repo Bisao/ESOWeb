@@ -46,13 +46,18 @@ export function PlayerController() {
     const onPointerLockChange = () => {
       if (document.pointerLockElement === document.body) {
         document.addEventListener('mousemove', onMouseMove);
+        document.body.style.cursor = 'none';
       } else {
         document.removeEventListener('mousemove', onMouseMove);
+        document.body.style.cursor = 'auto';
       }
     };
 
+    if (gamePhase === GamePhase.Playing) {
+      document.body.requestPointerLock();
+    }
+
     document.addEventListener('pointerlockchange', onPointerLockChange);
-    document.addEventListener('mousemove', onMouseMove);
 
     return () => {
       document.removeEventListener('pointerlockchange', onPointerLockChange);
@@ -60,6 +65,7 @@ export function PlayerController() {
       if (document.pointerLockElement === document.body) {
         document.exitPointerLock();
       }
+      document.body.style.cursor = 'auto';
     };
   }, [character, gamePhase]);
 
