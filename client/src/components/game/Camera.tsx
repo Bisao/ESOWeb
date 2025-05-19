@@ -21,16 +21,16 @@ export function Camera() {
     
     // Calculate camera position based on camera type
     if (cameraType === 'thirdPerson') {
-      // Position camera behind player and to the left
+      // Position camera behind player and slightly to the left
       cameraPosition.current.set(
-        character.position.x - Math.sin(character.rotation) * 8 - 2, // Added offset to move camera left
+        character.position.x - Math.sin(character.rotation) * 8 - 1, // Reduced offset for less extreme positioning
         character.position.y + 5,
         character.position.z - Math.cos(character.rotation) * 8
       );
       
       // Look at player position with adjusted offset
       cameraLookAt.current.set(
-        character.position.x + Math.sin(character.rotation) * 2 - 2, // Added offset to keep looking at player
+        character.position.x + Math.sin(character.rotation) * 2 - 1, // Reduced offset to match camera
         character.position.y + 1.5,
         character.position.z + Math.cos(character.rotation) * 2
       );
