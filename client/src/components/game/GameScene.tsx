@@ -54,6 +54,28 @@ export function GameScene() {
     };
   }, [gamePhase, connect, disconnect]);
   
+  const handleMouseDown = (e: MouseEvent) => {
+    if (e.button === 0) { // Botão esquerdo
+      controls.attack = true;
+    }
+  };
+
+  const handleMouseUp = (e: MouseEvent) => {
+    if (e.button === 0) {
+      controls.attack = false;
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
   return (
     <KeyboardControls map={keyMap}>
       <Canvas
