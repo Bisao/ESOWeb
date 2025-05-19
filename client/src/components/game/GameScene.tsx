@@ -54,15 +54,17 @@ export function GameScene() {
     };
   }, [gamePhase, connect, disconnect]);
   
+  const [controls] = useKeyboardControls<Controls>();
+
   const handleMouseDown = (e: MouseEvent) => {
     if (e.button === 0) { // Botão esquerdo
-      controls.attack = true;
+      useKeyboardControls.setState({ [Controls.attack]: true });
     }
   };
 
   const handleMouseUp = (e: MouseEvent) => {
     if (e.button === 0) {
-      controls.attack = false;
+      useKeyboardControls.setState({ [Controls.attack]: false });
     }
   };
 
